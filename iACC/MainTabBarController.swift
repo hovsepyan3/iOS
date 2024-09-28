@@ -56,58 +56,51 @@ class MainTabBarController: UITabBarController {
 	
 	private func makeFriendsList() -> ListViewController {
 		let vc = ListViewController()
-		vc.fromFriendsScreen = true
-        vc.shouldRetry = true
-        vc.maxRetryCount = 2
         vc.title = "Friends"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add,
                                                                target: vc,
                                                                action: #selector(addFriend))
         let isPremium = User.shared?.isPremium == true
-        vc.service = FriendsAPIItemsServiceAdapter(api: FriendsAPI.shared,
+        let api = FriendsAPIItemsServiceAdapter(api: FriendsAPI.shared,
                                                 cache: isPremium ? friendsCache : NullFriendsCacheObject(),
                                                 select: { [weak vc] friend in
             vc?.select(friend)
-        })
+        }).retry(2)
+        
+        let cache = FriendsCacheItemsServiceAdapter(cache: friendsCache) { [weak vc] friend in
+            vc?.select(friend)
+        }
+        vc.service = isPremium ? api.fallback(cache) : api
+        
 		return vc
 	}
 	
 	private func makeSentTransfersList() -> ListViewController {
 		let vc = ListViewController()
-		vc.fromSentTransfersScreen = true
-        vc.shouldRetry = true
-        vc.maxRetryCount = 1
-        vc.longDateStyle = true
         vc.navigationItem.title = "Sent"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done,
                                                                target: vc, action: #selector(sendMoney))
         vc.service = SentTransfersAPIItemsServiceAdapter(api: TransfersAPI.shared,
                                                          select: { [weak vc] transfer in
             vc?.select(transfer)
-        })
+        }).retry(1)
 		return vc
 	}
 	
 	private func makeReceivedTransfersList() -> ListViewController {
 		let vc = ListViewController()
-		vc.fromReceivedTransfersScreen = true
-        vc.shouldRetry = true
-        vc.maxRetryCount = 1
-        vc.longDateStyle = false
         vc.navigationItem.title = "Received"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done,
                                                                target: vc, action: #selector(requestMoney))
         vc.service = RecevedTransfersAPIItemsServiceAdapter(api: TransfersAPI.shared,
                                                             select: { [weak vc] transfer in
             vc?.select(transfer)
-        })
+        }).retry(1)
 		return vc
 	}
 	
 	private func makeCardsList() -> ListViewController {
 		let vc = ListViewController()
-		vc.fromCardsScreen = true
-        vc.shouldRetry = false
         vc.title = "Cards"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add,
                                                                target: vc,
@@ -123,86 +116,4 @@ class MainTabBarController: UITabBarController {
 
 class NullFriendsCacheObject: FriendsCache {
     override func save(_ newFriends: [Friend]) {}
-}
-
-struct FriendsAPIItemsServiceAdapter: ItemsService {
-    var api: FriendsAPI
-    var cache: FriendsCache
-    var select: (Friend) -> Void
-    
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
-        api.loadFriends { result in
-            DispatchQueue.mainAsyncIfNeeded {
-                completion(result.map { items in
-                    cache.save(items)
-                    return items.map { item in
-                        ItemViewModel(item) {
-                            select(item)
-                        }
-                    }
-                })
-            }
-        }
-    }
-}
-
-struct CardAPIItemsServiceAdapter: ItemsService {
-    var api: CardAPI
-    var select: (Card) -> Void
-    
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
-        api.loadCards { result in
-            DispatchQueue.mainAsyncIfNeeded {
-                completion(result.map { items in
-                    items.map { item in
-                        ItemViewModel(item) {
-                            select(item)
-                        }
-                    }
-                })
-            }
-        }
-    }
-}
-
-struct SentTransfersAPIItemsServiceAdapter: ItemsService {
-    var api: TransfersAPI
-    var select: (Transfer) -> Void
-    
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
-        api.loadTransfers { result in
-            DispatchQueue.mainAsyncIfNeeded {
-                completion(result.map { items in
-                    items
-                        .filter { $0.isSender }
-                        .map { item in
-                        ItemViewModel(item, longDateStyle: true) {
-                            select(item)
-                        }
-                    }
-                })
-            }
-        }
-    }
-}
-
-struct RecevedTransfersAPIItemsServiceAdapter: ItemsService {
-    var api: TransfersAPI
-    var select: (Transfer) -> Void
-    
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
-        api.loadTransfers { result in
-            DispatchQueue.mainAsyncIfNeeded {
-                completion(result.map { items in
-                    items
-                        .filter { !$0.isSender }
-                        .map { item in
-                        ItemViewModel(item, longDateStyle: false) {
-                            select(item)
-                        }
-                    }
-                })
-            }
-        }
-    }
 }

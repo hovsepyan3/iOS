@@ -4,25 +4,10 @@
 
 import UIKit
 
-protocol ItemsService {
-    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void)
-}
-
 class ListViewController: UITableViewController {
-	var items = [ItemViewModel]()
     
+	var items = [ItemViewModel]()
     var service: ItemsService?
-	
-	var retryCount = 0
-	var maxRetryCount = 0
-	var shouldRetry = false
-	
-	var longDateStyle = false
-	
-	var fromReceivedTransfersScreen = false
-	var fromSentTransfersScreen = false
-	var fromCardsScreen = false
-	var fromFriendsScreen = false
 	
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -47,43 +32,12 @@ class ListViewController: UITableViewController {
 	private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
 		switch result {
 		case let .success(items):
-			self.retryCount = 0
             self.items = items
 			self.refreshControl?.endRefreshing()
 			self.tableView.reloadData()
-			
 		case let .failure(error):
-			if shouldRetry && retryCount < maxRetryCount {
-				retryCount += 1
-				
-				refresh()
-				return
-			}
-			
-			retryCount = 0
-			
-			if fromFriendsScreen && User.shared?.isPremium == true {
-				(UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.loadFriends { [weak self] result in
-					DispatchQueue.mainAsyncIfNeeded {
-						switch result {
-						case let .success(items):
-                            self?.items = items.map { item in
-                                ItemViewModel(item) { [weak self] in
-                                    self?.select(item)
-                                }
-                            }
-							self?.tableView.reloadData()
-							
-						case let .failure(error):
-							self?.showError(error)
-						}
-						self?.refreshControl?.endRefreshing()
-					}
-				}
-			} else {
-                self.showError(error)
-				self.refreshControl?.endRefreshing()
-			}
+            self.showError(error)
+            self.refreshControl?.endRefreshing()
 		}
 	}
 	
@@ -106,90 +60,4 @@ class ListViewController: UITableViewController {
 		let item = items[indexPath.row]
         item.select()
 	}
-}
-
-struct ItemViewModel {
-    var title: String
-    var subTitle: String
-    var select: () -> Void
-    
-    init(_ friend: Friend, selection: @escaping () -> Void) {
-        title = friend.name
-        subTitle = friend.phone
-        select = selection
-    }
-    
-    init(_ card: Card, selection: @escaping () -> Void) {
-        title = card.number
-        subTitle = card.holder
-        select = selection
-    }
-    
-    init(_ transfer: Transfer, longDateStyle: Bool, selection: @escaping () -> Void) {
-        let numberFormatter = Formatters.number
-        numberFormatter.numberStyle = .currency
-        numberFormatter.currencyCode = transfer.currencyCode
-        
-        let amount = numberFormatter.string(from: transfer.amount as NSNumber)!
-        title = "\(amount) • \(transfer.description)"
-        
-        let dateFormatter = Formatters.date
-        if longDateStyle {
-            dateFormatter.dateStyle = .long
-            dateFormatter.timeStyle = .short
-            subTitle = "Sent to: \(transfer.recipient) on \(dateFormatter.string(from: transfer.date))"
-        } else {
-            dateFormatter.dateStyle = .short
-            dateFormatter.timeStyle = .short
-            subTitle = "Received from: \(transfer.sender) on \(dateFormatter.string(from: transfer.date))"
-        }
-        select = selection
-    }
-}
-
-extension UITableViewCell {
-	func configure(_ vm: ItemViewModel) {
-        textLabel?.text = vm.title
-        detailTextLabel?.text = vm.subTitle
-	}
-}
-
-extension UIViewController {
-    func select(_ friend: Friend) {
-        let vc = FriendDetailsViewController()
-        vc.friend = friend
-        show(vc, sender: self)
-    }
-    func select(_ card: Card) {
-        let vc = CardDetailsViewController()
-        vc.card = card
-        show(vc, sender: self)
-    }
-    func select(_ transfer: Transfer) {
-        let vc = TransferDetailsViewController()
-        vc.transfer = transfer
-        show(vc, sender: self)
-    }
-    
-    @objc func addCard() {
-        show(AddCardViewController(), sender: self)
-    }
-    
-    @objc func addFriend() {
-        show(AddFriendViewController(), sender: self)
-    }
-    
-    @objc func sendMoney() {
-        show(SendMoneyViewController(), sender: self)
-    }
-    
-    @objc func requestMoney() {
-        show(RequestMoneyViewController(), sender: self)
-    }
-    
-    func showError(_ error: Error) {
-        let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ok", style: .default))
-        showDetailViewController(alert, sender: self)
-    }
 }
