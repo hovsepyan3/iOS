@@ -5,9 +5,12 @@
 import UIKit
 
 class MainTabBarController: UITabBarController {
+    
+    var friendsCache: FriendsCache!
 	
-	convenience init() {
+    convenience init(friendsCache: FriendsCache) {
 		self.init(nibName: nil, bundle: nil)
+        self.friendsCache = friendsCache
 		self.setupViewController()
 	}
 
@@ -54,6 +57,18 @@ class MainTabBarController: UITabBarController {
 	private func makeFriendsList() -> ListViewController {
 		let vc = ListViewController()
 		vc.fromFriendsScreen = true
+        vc.shouldRetry = true
+        vc.maxRetryCount = 2
+        vc.title = "Friends"
+        vc.navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add,
+                                                               target: vc,
+                                                               action: #selector(addFriend))
+        let isPremium = User.shared?.isPremium == true
+        vc.service = FriendsAPIItemsServiceAdapter(api: FriendsAPI.shared,
+                                                cache: isPremium ? friendsCache : NullFriendsCacheObject(),
+                                                select: { [weak vc] friend in
+            vc?.select(friend)
+        })
 		return vc
 	}
 	
@@ -75,4 +90,29 @@ class MainTabBarController: UITabBarController {
 		return vc
 	}
 	
+}
+
+class NullFriendsCacheObject: FriendsCache {
+    override func save(_ newFriends: [Friend]) {}
+}
+
+struct FriendsAPIItemsServiceAdapter: ItemsService {
+    var api: FriendsAPI
+    var cache: FriendsCache
+    var select: (Friend) -> Void
+    
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
+        api.loadFriends { result in
+            DispatchQueue.mainAsyncIfNeeded {
+                completion(result.map { items in
+                    cache.save(items)
+                    return items.map { item in
+                        ItemViewModel(item) {
+                            select(item)
+                        }
+                    }
+                })
+            }
+        }
+    }
 }
