@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 53;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -49,6 +49,9 @@
 		08B9DDA22C9EE3990090CFDC /* FriendsCache+TestHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B9DD872C9EE3990090CFDC /* FriendsCache+TestHelpers.swift */; };
 		08B9DDA32C9EE3990090CFDC /* FriendsIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08B9DD892C9EE3990090CFDC /* FriendsIntegrationTests.swift */; };
 		08E1DE882CA01E1900FF240D /* UIView+Tap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08E1DE872CA01E1900FF240D /* UIView+Tap.swift */; };
+		CE4380DA2CA8647000027362 /* ItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4380D92CA8647000027362 /* ItemViewModel.swift */; };
+		CE4380DC2CA864EF00027362 /* Adapters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4380DB2CA864EF00027362 /* Adapters.swift */; };
+		CE4380DE2CA8654700027362 /* ItemServiceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE4380DD2CA8654700027362 /* ItemServiceProtocol.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -108,6 +111,9 @@
 		08B9DD872C9EE3990090CFDC /* FriendsCache+TestHelpers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "FriendsCache+TestHelpers.swift"; sourceTree = "<group>"; };
 		08B9DD892C9EE3990090CFDC /* FriendsIntegrationTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FriendsIntegrationTests.swift; sourceTree = "<group>"; };
 		08E1DE872CA01E1900FF240D /* UIView+Tap.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "UIView+Tap.swift"; sourceTree = "<group>"; };
+		CE4380D92CA8647000027362 /* ItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemViewModel.swift; sourceTree = "<group>"; };
+		CE4380DB2CA864EF00027362 /* Adapters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Adapters.swift; sourceTree = "<group>"; };
+		CE4380DD2CA8654700027362 /* ItemServiceProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItemServiceProtocol.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -164,6 +170,9 @@
 				08927BC5268618AC009195BD /* ListViewController.swift */,
 				08927BC3268618AC009195BD /* SegmentNavigationViewController.swift */,
 				08927BCC268618AC009195BD /* NotImplementedViewControllers.swift */,
+				CE4380DD2CA8654700027362 /* ItemServiceProtocol.swift */,
+				CE4380DB2CA864EF00027362 /* Adapters.swift */,
+				CE4380D92CA8647000027362 /* ItemViewModel.swift */,
 				080833DF268F609C00A8099A /* Helpers.swift */,
 				08927BCA268618AC009195BD /* User.swift */,
 				08927BCB268618AC009195BD /* FriendsAPI.swift */,
@@ -381,7 +390,10 @@
 				08927B932686183A009195BD /* AppDelegate.swift in Sources */,
 				08927BCF268618AC009195BD /* ListViewController.swift in Sources */,
 				08040FFC268B4C1D0062A93B /* MainTabBarController.swift in Sources */,
+				CE4380DC2CA864EF00027362 /* Adapters.swift in Sources */,
+				CE4380DA2CA8647000027362 /* ItemViewModel.swift in Sources */,
 				08927BD0268618AC009195BD /* CardAPI.swift in Sources */,
+				CE4380DE2CA8654700027362 /* ItemServiceProtocol.swift in Sources */,
 				08927BD6268618AC009195BD /* NotImplementedViewControllers.swift in Sources */,
 				08927BD5268618AC009195BD /* FriendsAPI.swift in Sources */,
 				08927BD1268618AC009195BD /* FriendsCache.swift in Sources */,
