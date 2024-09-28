@@ -5,7 +5,7 @@
 import UIKit
 
 class ListViewController: UITableViewController {
-	var items = [Any]()
+	var items = [ItemViewModel]()
 	
 	var retryCount = 0
 	var maxRetryCount = 0
@@ -107,7 +107,19 @@ class ListViewController: UITableViewController {
 				}
 			}
 			
-			self.items = filteredItems
+            self.items = filteredItems.map({ item in
+                ItemViewModel(item, longDateStyle: longDateStyle) { [weak self] in
+                    if let friend = item as? Friend {
+                        self?.select(friend)
+                    } else if let card = item as? Card {
+                        self?.select(card)
+                    } else if let transfer = item as? Transfer {
+                        self?.select(transfer)
+                    } else {
+                        fatalError("unknown item: \(item)")
+                    }
+                }
+            })
 			self.refreshControl?.endRefreshing()
 			self.tableView.reloadData()
 			
@@ -126,7 +138,11 @@ class ListViewController: UITableViewController {
 					DispatchQueue.mainAsyncIfNeeded {
 						switch result {
 						case let .success(items):
-							self?.items = items
+                            self?.items = items.map { item in
+                                ItemViewModel(item) { [weak self] in
+                                    self?.select(item)
+                                }
+                            }
 							self?.tableView.reloadData()
 							
 						case let .failure(error):
@@ -153,52 +169,46 @@ class ListViewController: UITableViewController {
 	override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 		let item = items[indexPath.row]
 		let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell") ?? UITableViewCell(style: .subtitle, reuseIdentifier: "ItemCell")
-        var vm = ItemViewModel(item, longDateStyle: longDateStyle)
-		cell.configure(vm)
+		cell.configure(item)
 		return cell
 	}
 	
 	override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 		let item = items[indexPath.row]
-		if let friend = item as? Friend {
-			select(friend)
-		} else if let card = item as? Card {
-            select(card)
-		} else if let transfer = item as? Transfer {
-            select(transfer)
-		} else {
-			fatalError("unknown item: \(item)")
-		}
+        item.select()
 	}
 }
 
 struct ItemViewModel {
     var title: String
     var subTitle: String
+    var select: () -> Void
     
-    init(_ item: Any, longDateStyle: Bool) {
+    init(_ item: Any, longDateStyle: Bool, _ selection: @escaping () -> Void) {
         if let friend = item as? Friend {
-            self.init(friend)
+            self.init(friend, selection: selection)
         } else if let card = item as? Card {
-            self.init(card)
+            self.init(card, selection: selection)
         } else if let transfer = item as? Transfer {
-            self.init(transfer, longDateStyle: longDateStyle)
+            self.init(transfer, longDateStyle: longDateStyle, selection: selection)
         } else {
             fatalError("unknown item: \(item)")
         }
     }
     
-    init(_ friend: Friend) {
+    init(_ friend: Friend, selection: @escaping () -> Void) {
         title = friend.name
         subTitle = friend.phone
+        select = selection
     }
     
-    init(_ card: Card) {
+    init(_ card: Card, selection: @escaping () -> Void) {
         title = card.number
         subTitle = card.holder
+        select = selection
     }
     
-    init(_ transfer: Transfer, longDateStyle: Bool) {
+    init(_ transfer: Transfer, longDateStyle: Bool, selection: @escaping () -> Void) {
         let numberFormatter = Formatters.number
         numberFormatter.numberStyle = .currency
         numberFormatter.currencyCode = transfer.currencyCode
@@ -216,6 +226,7 @@ struct ItemViewModel {
             dateFormatter.timeStyle = .short
             subTitle = "Received from: \(transfer.sender) on \(dateFormatter.string(from: transfer.date))"
         }
+        select = selection
     }
 }
 
