@@ -182,18 +182,6 @@ struct ItemViewModel {
     var subTitle: String
     var select: () -> Void
     
-    init(_ item: Any, longDateStyle: Bool, _ selection: @escaping () -> Void) {
-        if let friend = item as? Friend {
-            self.init(friend, selection: selection)
-        } else if let card = item as? Card {
-            self.init(card, selection: selection)
-        } else if let transfer = item as? Transfer {
-            self.init(transfer, longDateStyle: longDateStyle, selection: selection)
-        } else {
-            fatalError("unknown item: \(item)")
-        }
-    }
-    
     init(_ friend: Friend, selection: @escaping () -> Void) {
         title = friend.name
         subTitle = friend.phone
